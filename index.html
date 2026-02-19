@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Adoption - UX Lifecycle & Interactive Launch</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Nunito -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            overflow: hidden;
+            background-color: #FFF8F0;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* App Animations */
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(var(--rot));
+            }
+
+            50% {
+                transform: translateY(-15px) rotate(var(--rot));
+            }
+        }
+
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes phone-breathe {
+
+            0%,
+            100% {
+                transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(0.85) translateY(0) translateX(0);
+            }
+
+            50% {
+                transform: rotateX(2deg) rotateY(-1deg) rotateZ(0deg) scale(0.85) translateY(-10px) translateX(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fade-in 0.4s ease-in-out;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* 3D Presentation Styles */
+        .perspective-container {
+            perspective: 1500px;
+        }
+
+        /* State 1: Phone lying flat */
+        .phone-flat {
+            transform: rotateX(60deg) rotateY(0deg) rotateZ(-30deg) scale(0.6) translateY(200px) translateX(250px);
+            box-shadow: -30px 40px 20px rgba(0, 0, 0, 0.15), -5px 10px 0px rgba(0, 0, 0, 0.05);
+            filter: blur(3px) brightness(0.7);
+        }
+
+        /* State 2: Phone standing up */
+        .phone-up {
+            transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(0.85) translateY(0) translateX(0);
+            box-shadow: 0px 40px 60px rgba(0, 0, 0, 0.25);
+            filter: blur(0px) brightness(1);
+        }
+
+        .phone-breathe-active {
+            animation: phone-breathe 6s ease-in-out infinite;
+        }
+
+        /* UX Slide Transitions */
+        .ux-slide {
+            transition: all 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .ux-slide-active {
+            opacity: 1 !important;
+            transform: translateY(0) scale(1) !important;
+            pointer-events: auto !important;
+        }
+
+        /* Tooltip transition */
+        .app-tooltip {
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .tooltip-active {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+            pointer-events: auto !important;
+        }
+
+        .mask-gradient-top {
+            mask-image: linear-gradient(to bottom, transparent 0%, black 20%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%);
+        }
+
+        .mask-image-bottom {
+            mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 80%, rgba(0, 0, 0, 0) 100%);
+            -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 80%, rgba(0, 0, 0, 0) 100%);
+        }
+
+        @keyframes message-enter {
+            0% {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .animate-message {
+            animation: message-enter 0.3s ease-out forwards;
+        }
+
+        @keyframes pop-up {
+            0% {
+                transform: translateY(0) scale(0.5) rotate(0deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-200px) scale(1.5) rotate(20deg);
+                opacity: 0;
+            }
+        }
+
+        .animate-pop-up {
+            animation: pop-up 1.5s ease-out forwards;
+        }
+
+        @keyframes slow-zoom {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .animate-slow-zoom {
+            animation: slow-zoom 20s ease-in-out infinite;
+        }
+
+        .snap-y-container {
+            scroll-snap-type: y mandatory;
+        }
+
+        .snap-child {
+            scroll-snap-align: start;
+        }
+
+        /* Custom Scrollbar for Menu */
+        .menu-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .menu-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .menu-scroll::-webkit-scrollbar-thumb {
+            background-color: #CBD5E1;
+            border-radius: 10px;
+        }
+
+        @keyframes float3d {
+
+            0%,
+            100% {
+                transform: translateY(0) translateX(0) rotateY(0deg) rotateX(0deg) rotateZ(0deg) scale(1);
+            }
+
+            33% {
+                transform: translateY(-25px) translateX(15px) rotateY(15deg) rotateX(8deg) rotateZ(5deg) scale(1.1);
+            }
+
+            66% {
+                transform: translateY(-15px) translateX(-20px) rotateY(-10deg) rotateX(-12deg) rotateZ(-8deg) scale(0.95);
+            }
+        }
+
+        .animate-float-3d {
+            animation: float3d 12s ease-in-out infinite;
+        }
+
+        @keyframes float3d-slow {
+
+            0%,
+            100% {
+                transform: translateY(0) translateX(0) rotateY(0deg) rotateX(0deg) rotateZ(0deg);
+            }
+
+            25% {
+                transform: translateY(-35px) translateX(25px) rotateY(25deg) rotateX(15deg) rotateZ(10deg);
+            }
+
+            50% {
+                transform: translateY(-20px) translateX(-30px) rotateY(-15deg) rotateX(-20deg) rotateZ(-15deg);
+            }
+
+            75% {
+                transform: translateY(-40px) translateX(10px) rotateY(10deg) rotateX(25deg) rotateZ(5deg);
+            }
+        }
+
+        .animate-float-3d-slow {
+            animation: float3d-slow 18s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                opacity: 0.4;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.7;
+                transform: scale(1.2);
+            }
+        }
+
+        .animate-pulse-glow {
+            animation: pulse-glow 4s ease-in-out infinite;
+        }
+
+        /* 3D Object Styles */
+        .object-3d {
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+
+        /* NEW: Floating Title Styles */
+        #floating-app-title {
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen text-slate-800">
+
+    <!-- Main Presentation Stage -->
+    <div class="perspective-container flex items-center justify-center min-h-screen relative w-full h-full">
+
+        <!-- Bright & Playful Background Decor with 3D Floating Objects -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none bg-[#FFF8F0]" style="perspective: 1200px;">
+            <div class="absolute inset-0 opacity-[0.05]"
+                style="background-image: radial-gradient(#000 2px, transparent 2px); background-size: 32px 32px;"></div>
+
+            <!-- Large floating orbs (kept for ambiance) -->
+            <div class="absolute top-[-5%] left-[-5%] w-[400px] h-[400px] bg-[#FDB540] rounded-full mix-blend-multiply filter blur-[80px] opacity-40 animate-float-3d-slow"
+                style="animation-duration: 15s;"></div>
+            <div class="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-[#A8D8D6] rounded-full mix-blend-multiply filter blur-[80px] opacity-50 animate-float-3d-slow"
+                style="animation-delay: 3s; animation-duration: 18s;"></div>
+            <div class="absolute top-[20%] right-[10%] w-[300px] h-[300px] bg-[#F4B5A4] rounded-full mix-blend-multiply filter blur-[80px] opacity-40 animate-float-3d-slow"
+                style="animation-delay: 6s; animation-duration: 16s;"></div>
+            <div class="absolute bottom-[30%] left-[5%] w-[350px] h-[350px] bg-[#C2B4D6] rounded-full mix-blend-multiply filter blur-[100px] opacity-30 animate-float-3d-slow"
+                style="animation-delay: 2s; animation-duration: 20s;"></div>
+
+            <!-- 3D Floating Cat Icons -->
+            <div class="object-3d absolute top-[8%] left-[12%] text-[#FDB540] animate-float-3d opacity-70"
+                style="animation-duration: 10s; animation-delay: 0s;"><i data-lucide="cat" class="w-12 h-12"></i></div>
+            <div class="object-3d absolute top-[25%] right-[18%] text-[#A8D8D6] animate-float-3d opacity-60"
+                style="animation-duration: 13s; animation-delay: 2s;"><i data-lucide="cat" class="w-10 h-10"></i></div>
+            <div class="object-3d absolute bottom-[20%] left-[20%] text-[#F4B5A4] animate-float-3d opacity-65"
+                style="animation-duration: 11s; animation-delay: 4s;"><i data-lucide="cat" class="w-14 h-14"></i></div>
+            <div class="object-3d absolute top-[55%] right-[8%] text-[#C2B4D6] animate-float-3d opacity-55"
+                style="animation-duration: 14s; animation-delay: 1s;"><i data-lucide="cat" class="w-11 h-11"></i></div>
+            <div class="object-3d absolute bottom-[35%] right-[25%] text-[#FDB540] animate-float-3d opacity-50"
+                style="animation-duration: 12s; animation-delay: 3s;"><i data-lucide="cat" class="w-9 h-9"></i></div>
+            <div class="object-3d absolute top-[70%] left-[35%] text-[#A8D8D6] animate-float-3d opacity-60"
+                style="animation-duration: 15s; animation-delay: 5s;"><i data-lucide="cat" class="w-10 h-10"></i></div>
+
+            <!-- 3D Floating Paw Prints -->
+            <div class="object-3d absolute top-[12%] right-[35%] text-[#FDB540] animate-float-3d opacity-40"
+                style="animation-duration: 9s; animation-delay: 0.5s;"><i data-lucide="paw-print" class="w-10 h-10"></i>
+            </div>
+            <div class="object-3d absolute top-[40%] left-[5%] text-[#A8D8D6] animate-float-3d opacity-35"
+                style="animation-duration: 11s; animation-delay: 2.5s;"><i data-lucide="paw-print" class="w-8 h-8"></i>
+            </div>
+            <div class="object-3d absolute top-[30%] right-[5%] text-[#F4B5A4] animate-float-3d opacity-45"
+                style="animation-duration: 10s; animation-delay: 1.5s;"><i data-lucide="paw-print"
+                    class="w-12 h-12"></i></div>
+            <div class="object-3d absolute bottom-[30%] left-[8%] text-[#C2B4D6] animate-float-3d opacity-30"
+                style="animation-duration: 12s; animation-delay: 3.5s;"><i data-lucide="paw-print" class="w-9 h-9"></i>
+            </div>
+            <div class="object-3d absolute bottom-[15%] right-[15%] text-[#FDB540] animate-float-3d opacity-35"
+                style="animation-duration: 8s; animation-delay: 4s;"><i data-lucide="paw-print" class="w-7 h-7"></i>
+            </div>
+            <div class="object-3d absolute top-[60%] left-[45%] text-[#F4B5A4] animate-float-3d opacity-25"
+                style="animation-duration: 13s; animation-delay: 2s;"><i data-lucide="paw-print" class="w-6 h-6"></i>
+            </div>
+            <div class="object-3d absolute top-[78%] right-[40%] text-[#C2B4D6] animate-float-3d opacity-30"
+                style="animation-duration: 10s; animation-delay: 5s;"><i data-lucide="paw-print" class="w-8 h-8"></i>
+            </div>
+            <div class="object-3d absolute top-[5%] left-[50%] text-[#A8D8D6] animate-float-3d opacity-25"
+                style="animation-duration: 14s; animation-delay: 1s;"><i data-lucide="paw-print" class="w-9 h-9"></i>
+            </div>
+
+            <!-- 3D Floating Fish Icons -->
+            <div class="object-3d absolute top-[18%] left-[35%] text-[#FDB540] animate-float-3d opacity-55"
+                style="animation-duration: 12s; animation-delay: 1s;"><i data-lucide="fish" class="w-10 h-10"></i></div>
+            <div class="object-3d absolute top-[45%] right-[30%] text-[#A8D8D6] animate-float-3d opacity-50"
+                style="animation-duration: 14s; animation-delay: 3s;"><i data-lucide="fish" class="w-8 h-8"></i></div>
+            <div class="object-3d absolute bottom-[25%] left-[40%] text-[#F4B5A4] animate-float-3d opacity-45"
+                style="animation-duration: 11s; animation-delay: 2s;"><i data-lucide="fish" class="w-11 h-11"></i></div>
+            <div class="object-3d absolute top-[65%] left-[15%] text-[#C2B4D6] animate-float-3d opacity-40"
+                style="animation-duration: 13s; animation-delay: 4s;"><i data-lucide="fish" class="w-9 h-9"></i></div>
+            <div class="object-3d absolute bottom-[45%] right-[12%] text-[#FDB540] animate-float-3d opacity-50"
+                style="animation-duration: 10s; animation-delay: 0s;"><i data-lucide="fish" class="w-10 h-10"></i></div>
+            <div class="object-3d absolute top-[82%] right-[28%] text-[#A8D8D6] animate-float-3d opacity-35"
+                style="animation-duration: 15s; animation-delay: 5s;"><i data-lucide="fish" class="w-7 h-7"></i></div>
+            <div class="object-3d absolute top-[35%] left-[28%] text-[#F4B5A4] animate-float-3d opacity-40"
+                style="animation-duration: 12s; animation-delay: 2.5s;"><i data-lucide="fish" class="w-8 h-8"></i></div>
+
+            <!-- Subtle floating particles (small dots) -->
+            <div class="absolute top-[25%] left-[40%] w-3 h-3 bg-[#FDB540] rounded-full animate-pulse-glow"
+                style="animation-delay: 0s;"></div>
+            <div class="absolute top-[55%] right-[35%] w-2 h-2 bg-[#A8D8D6] rounded-full animate-pulse-glow"
+                style="animation-delay: 1s;"></div>
+            <div class="absolute bottom-[40%] left-[60%] w-4 h-4 bg-[#F4B5A4] rounded-full animate-pulse-glow"
+                style="animation-delay: 2s;"></div>
+            <div class="absolute top-[50%] left-[75%] w-2 h-2 bg-[#C2B4D6] rounded-full animate-pulse-glow"
+                style="animation-delay: 3s;"></div>
+            <div class="absolute bottom-[60%] right-[45%] w-3 h-3 bg-[#FDB540] rounded-full animate-pulse-glow"
+                style="animation-delay: 1.5s;"></div>
+        </div>
+
+        <!-- NEW: Floating Center App Title (Visible before Start) - Smaller size -->
+        <div id="floating-app-title"
+            class="absolute z-50 flex flex-col items-center pointer-events-none animate-float scale-50"
+            style="--rot: 0deg; transform-origin: center center;">
+            <div
+                class="bg-[#FDB540] border-[3px] border-black px-5 py-3 rounded-[24px] shadow-[0_8px_0_0_rgba(0,0,0,1)] flex flex-col items-center">
+                <div
+                    class="w-12 h-12 bg-white border-2 border-black rounded-full flex items-center justify-center mb-2 shadow-md overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80"
+                        class="w-full h-full object-cover" alt="Logo">
+                </div>
+                <h1 class="text-4xl font-black tracking-tighter text-black">MEOW HELP</h1>
+                <p class="font-black text-black/60 text-xs mt-1 tracking-widest uppercase italic">Digital Charity
+                    Platform</p>
+            </div>
+            <div
+                class="mt-3 bg-white border-2 border-black rounded-full px-3 py-1 shadow-[0_2px_0_0_rgba(0,0,0,1)] animate-pulse">
+                <span class="font-black text-black text-xs">Ready to launch? Click Start Below</span>
+            </div>
+        </div>
+
+        <!-- ================= UX LIFECYCLE SLIDES ================= -->
+        <div id="ux-slides-container"
+            class="absolute inset-0 z-40 flex items-center justify-center pointer-events-none p-10">
+
+            <!-- Slide 1: Intro & Team -->
+            <div id="ux-slide-1"
+                class="ux-slide absolute opacity-0 translate-y-16 scale-90 pointer-events-none flex flex-col items-center">
+                <div
+                    class="bg-white border-[8px] border-black rounded-[48px] p-12 shadow-[0_20px_0_0_rgba(0,0,0,1)] max-w-4xl w-full text-center relative overflow-hidden">
+                    <div
+                        class="absolute -top-12 -right-12 w-40 h-40 bg-[#FDB540] rounded-full mix-blend-multiply opacity-50">
+                    </div>
+                    <div
+                        class="absolute -bottom-12 -left-12 w-40 h-40 bg-[#C2B4D6] rounded-full mix-blend-multiply opacity-50">
+                    </div>
+
+                    <div class="relative z-10 flex flex-col items-center">
+                        <div
+                            class="w-32 h-32 bg-[#FDB540] border-[4px] border-black rounded-full flex items-center justify-center shadow-[0_8px_0_0_rgba(0,0,0,1)] mb-6 overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=300&q=80"
+                                class="w-full h-full object-cover" alt="Cat Logo">
+                        </div>
+                        <div
+                            class="bg-[#C2B4D6] border-[3px] border-black rounded-full px-6 py-2 inline-block font-black text-lg mb-4 shadow-[0_4px_0_0_rgba(0,0,0,1)]">
+                            UX Lifecycle Project</div>
+                        <h1 class="text-5xl font-black leading-tight mb-4 text-black">MEOW
+                            HELP<br>แอปพลิเคชันช่วยเหลือแมวจร</h1>
+                        <p class="text-xl text-gray-700 font-bold mb-10">เปลี่ยนการหาบ้านให้สัตว์จรจัดเป็นเรื่องง่าย
+                            สร้างประสบการณ์ใหม่ด้วยระบบ Live สตรีมมิ่ง</p>
+
+                        <div
+                            class="bg-[#FCF3E8] border-[3px] border-black rounded-3xl p-6 w-full max-w-2xl shadow-[0_6px_0_0_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform">
+                            <span
+                                class="text-black font-black block mb-4 text-center uppercase tracking-widest text-sm bg-white border-2 border-black rounded-full w-fit mx-auto px-4 py-1">คณะผู้จัดทำโครงการ</span>
+                            <div class="grid grid-cols-2 gap-4 text-center font-bold text-lg">
+                                <div class="flex items-center justify-center space-x-2"><i data-lucide="user"
+                                        class="w-5 h-5 text-[#FDB540]"></i><span>วชิรวิทย์ วงค์แสง</span></div>
+                                <div class="flex items-center justify-center space-x-2"><i data-lucide="user"
+                                        class="w-5 h-5 text-[#C2B4D6]"></i><span>ฐานทัต แสงจันทร์</span></div>
+                                <div class="flex items-center justify-center space-x-2"><i data-lucide="user"
+                                        class="w-5 h-5 text-[#A8D8D6]"></i><span>วาเลนทีน โนเกียร่า</span></div>
+                                <div class="flex items-center justify-center space-x-2"><i data-lucide="user"
+                                        class="w-5 h-5 text-[#F4B5A4]"></i><span>ธีรพัฒน์ ผากาเขียว</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2: Identify Objectives -->
+            <div id="ux-slide-2"
+                class="ux-slide absolute opacity-0 translate-y-16 scale-90 pointer-events-none flex flex-col items-center">
+                <div
+                    class="bg-[#F4B5A4] border-[8px] border-black rounded-[48px] p-10 shadow-[0_20px_0_0_rgba(0,0,0,1)] w-full max-w-5xl flex gap-8">
+                    <!-- Left Content -->
+                    <div class="flex-1 flex flex-col justify-center">
+                        <div
+                            class="bg-white border-[3px] border-black rounded-full px-5 py-2 inline-flex items-center w-fit mb-6 shadow-[0_4px_0_0_rgba(0,0,0,1)]">
+                            <i data-lucide="target" class="w-6 h-6 mr-2 text-[#F4B5A4]"></i>
+                            <h2 class="text-2xl font-black">1. Identify Objectives & Users</h2>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div
+                                class="bg-white border-[3px] border-black rounded-3xl p-5 shadow-[0_6px_0_0_rgba(0,0,0,1)] transform hover:-translate-y-1 transition-transform">
+                                <h3 class="font-black text-xl mb-2 flex items-center"><i data-lucide="home"
+                                        class="w-5 h-5 mr-2 text-red-500"></i> วัตถุประสงค์หลัก (Core Objective)</h3>
+                                <p class="font-bold text-gray-700 text-sm leading-relaxed">
+                                    1. เป็น <b>"ศูนย์กลางการหาบ้าน (Adoption Hub)"</b> ให้สัตว์จรจัด
+                                    เข้าถึงข้อมูลเชิงลึกได้ง่าย<br>
+                                    2. เปลี่ยนรูปแบบการบริจาคให้เป็น <b>"Interactive Charity"</b>
+                                    ส่งอาหารให้มูลนิธิผ่านไลฟ์สด
+                                </p>
+                            </div>
+                            <div
+                                class="bg-white border-[3px] border-black rounded-3xl p-5 shadow-[0_6px_0_0_rgba(0,0,0,1)] transform hover:-translate-y-1 transition-transform">
+                                <h3 class="font-black text-xl mb-2 flex items-center"><i data-lucide="users"
+                                        class="w-5 h-5 mr-2 text-blue-500"></i> กลุ่มเป้าหมาย (Target Users)</h3>
+                                <p class="font-bold text-gray-700 text-sm leading-relaxed">
+                                    <b>Primary:</b> กลุ่มคนรุ่นใหม่, นักศึกษา, คนวัยทำงานที่มีใจรักสัตว์
+                                    คุ้นเคยกับการไถฟีดวิดีโอ<br>
+                                    <b>Secondary:</b> อาสาสมัครและมูลนิธิสัตว์
+                                    ที่ต้องการพื้นที่โปร่งใสในการกระจายข่าวสาร
+                                </p>
+                            </div>
+                            <div
+                                class="bg-white border-[3px] border-black rounded-3xl p-5 shadow-[0_6px_0_0_rgba(0,0,0,1)] transform hover:-translate-y-1 transition-transform bg-gradient-to-r from-white to-[#FCF3E8]">
+                                <h3 class="font-black text-xl mb-2 flex items-center"><i data-lucide="globe"
+                                        class="w-5 h-5 mr-2 text-[#FDB540]"></i> เป้าหมายสูงสุด (Ultimate Goal)</h3>
+                                <p class="font-bold text-gray-700 text-sm leading-relaxed">
+                                    ลดจำนวนสัตว์จรจัดอย่างยั่งยืนผ่านกระบวนการรับเลี้ยงที่ไร้รอยต่อ (Seamless Adoption)
+                                    และสร้างสังคมที่การช่วยเหลือสัตว์เป็นเรื่องสนุกและทำได้ทุกวัน</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Research -->
+            <div id="ux-slide-3"
+                class="ux-slide absolute opacity-0 translate-y-16 scale-90 pointer-events-none flex flex-col items-center">
+                <div
+                    class="bg-[#A8D8D6] border-[8px] border-black rounded-[48px] p-10 shadow-[0_20px_0_0_rgba(0,0,0,1)] w-full max-w-5xl flex flex-col gap-6">
+                    <div class="flex items-center justify-center space-x-4 mb-2">
+                        <div
+                            class="bg-white border-[3px] border-black rounded-full px-5 py-2 inline-flex items-center shadow-[0_4px_0_0_rgba(0,0,0,1)]">
+                            <i data-lucide="search" class="w-6 h-6 mr-2 text-[#A8D8D6]"></i>
+                            <h2 class="text-2xl font-black">2. Research and Analysis</h2>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-white border-[4px] border-black rounded-3xl p-6 shadow-[0_8px_0_0_rgba(0,0,0,1)] text-center relative mx-auto w-[90%]">
+                        <div
+                            class="absolute -top-4 right-10 bg-[#C2B4D6] border-2 border-black rounded-full px-4 py-1 font-black text-sm shadow-sm rotate-3">
+                            In-depth Interview & Analysis</div>
+                        <p class="font-black text-gray-800 text-lg">
+                            ลงพื้นที่สัมภาษณ์เชิงลึกกลุ่มเป้าหมาย เพื่อค้นหาว่าทำไม "การรับเลี้ยงสัตว์"
+                            จึงเป็นเรื่องยากสำหรับคนรุ่นใหม่
+                        </p>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-6 w-full">
+                        <div
+                            class="bg-[#FCF3E8] p-6 rounded-3xl border-[4px] border-black shadow-[0_6px_0_0_rgba(0,0,0,1)] flex flex-col relative overflow-hidden hover:-translate-y-2 transition-transform">
+                            <div
+                                class="w-12 h-12 bg-[#F4B5A4] rounded-full flex items-center justify-center mb-4 border-2 border-black z-10">
+                                <i data-lucide="heart-crack" class="w-6 h-6 text-black"></i>
+                            </div>
+                            <h4 class="font-black text-xl mb-2 z-10">Adoption Pain Point</h4>
+                            <p class="text-sm font-bold text-gray-700 z-10 leading-relaxed">
+                                ขั้นตอนการรับเลี้ยงเดิมยุ่งยาก ข้อมูลสัตว์ไม่ครบถ้วน (เช่น นิสัย, สุขภาพ)
+                                และต้องเดินทางไกลไปดูตัวจริง ทำให้หลายคนถอดใจ</p>
+                        </div>
+                        <div
+                            class="bg-[#FCF3E8] p-6 rounded-3xl border-[4px] border-black shadow-[0_6px_0_0_rgba(0,0,0,1)] flex flex-col relative overflow-hidden hover:-translate-y-2 transition-transform">
+                            <div
+                                class="w-12 h-12 bg-[#C2B4D6] rounded-full flex items-center justify-center mb-4 border-2 border-black z-10">
+                                <i data-lucide="eye-off" class="w-6 h-6 text-black"></i>
+                            </div>
+                            <h4 class="font-black text-xl mb-2 z-10">Charity Pain Point</h4>
+                            <p class="text-sm font-bold text-gray-700 z-10 leading-relaxed">
+                                การบริจาคเงินแบบเดิมผ่านบัญชีธนาคาร <b>"ไม่เห็นภาพผลลัพธ์"</b> ว่าเงินไปถึงสัตว์จริงไหม
+                                ทำให้ขาดความผูกพันและแรงจูงใจ</p>
+                        </div>
+                        <div
+                            class="bg-[#FCF3E8] p-6 rounded-3xl border-[4px] border-black shadow-[0_6px_0_0_rgba(0,0,0,1)] flex flex-col relative overflow-hidden hover:-translate-y-2 transition-transform">
+                            <div
+                                class="w-12 h-12 bg-[#FDB540] rounded-full flex items-center justify-center mb-4 border-2 border-black z-10">
+                                <i data-lucide="smartphone" class="w-6 h-6 text-black"></i>
+                            </div>
+                            <h4 class="font-black text-xl mb-2 z-10">User Behavior</h4>
+                            <p class="text-sm font-bold text-gray-700 z-10 leading-relaxed">
+                                ผู้ใช้มักไถฟีดวิดีโอดูสัตว์น่ารักช่วง <b>"ก่อนนอน"</b> มีความฝันอยากเปิดฟาร์มแมว
+                                แต่มีข้อจำกัดด้านพื้นที่อยู่อาศัย (เช่น อยู่หอพัก)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Planning & Design -->
+            <div id="ux-slide-4"
+                class="ux-slide absolute opacity-0 translate-y-16 scale-90 pointer-events-none flex flex-col items-center">
+                <div
+                    class="bg-[#C2B4D6] border-[8px] border-black rounded-[48px] p-10 shadow-[0_20px_0_0_rgba(0,0,0,1)] w-full max-w-5xl">
+                    <div class="flex items-center justify-center space-x-4 mb-6">
+                        <div
+                            class="w-16 h-16 bg-white border-[4px] border-black rounded-full flex items-center justify-center shadow-[0_4px_0_0_rgba(0,0,0,1)]">
+                            <i data-lucide="pen-tool" class="w-8 h-8"></i>
+                        </div>
+                        <h2 class="text-4xl font-black">3. Planning and Design</h2>
+                    </div>
+
+                    <div class="flex gap-6 w-full">
+                        <!-- Left: Persona & UI -->
+                        <div class="w-2/5 flex flex-col gap-4">
+                            <div
+                                class="bg-white border-[4px] border-black rounded-[32px] p-6 shadow-[0_8px_0_0_rgba(0,0,0,1)] text-center relative">
+                                <div
+                                    class="w-16 h-16 bg-[#FDB540] border-[3px] border-black rounded-full flex items-center justify-center mx-auto mb-3 shadow-[0_4px_0_0_rgba(0,0,0,1)]">
+                                    <i data-lucide="user-check" class="w-8 h-8"></i>
+                                </div>
+                                <span
+                                    class="bg-black text-white text-xs font-black px-3 py-1 rounded-full mb-2 inline-block">Primary
+                                    Persona</span>
+                                <h3 class="font-black text-2xl">"ตัวแทน Gen Z"</h3>
+                                <p class="text-sm font-bold text-gray-600 mt-2">นักศึกษา
+                                    ตัวแทนคนรุ่นใหม่ที่ชอบเสพคอนเทนต์ไวรัล ใส่ใจสังคม แต่มีข้อจำกัดด้านเวลา</p>
+                            </div>
+                            <div
+                                class="bg-white border-[4px] border-black rounded-[32px] p-6 shadow-[0_8px_0_0_rgba(0,0,0,1)]">
+                                <span
+                                    class="bg-[#F4B5A4] text-black border-2 border-black text-xs font-black px-3 py-1 rounded-full mb-2 inline-block">Design
+                                    System</span>
+                                <h3 class="font-black text-xl mb-1">Neo-brutalism + Pastel</h3>
+                                <p class="text-sm font-bold text-gray-600">ใช้สีสันสดใส ขอบมน
+                                    เพื่อลดความหดหู่ของประเด็นสัตว์จรจัด สร้างบรรยากาศเชิงบวก</p>
+                            </div>
+                        </div>
+
+                        <!-- Right: Features -->
+                        <div
+                            class="w-3/5 bg-white border-[4px] border-black rounded-[32px] p-6 shadow-[0_8px_0_0_rgba(0,0,0,1)]">
+                            <h3 class="font-black text-2xl mb-4 border-b-4 border-black pb-2 inline-block">Core App
+                                Features</h3>
+                            <div class="grid grid-cols-2 gap-4 mt-2">
+                                <div
+                                    class="bg-[#FCF3E8] p-4 rounded-2xl border-[3px] border-black flex flex-col hover:-translate-y-1 transition-transform">
+                                    <div
+                                        class="w-10 h-10 bg-[#A8D8D6] border-2 border-black rounded-full flex items-center justify-center mb-2">
+                                        <i data-lucide="map-pin" class="w-5 h-5 text-black"></i>
+                                    </div>
+                                    <span class="font-black text-lg block leading-tight">Smart Adoption</span>
+                                    <span class="text-xs font-bold text-gray-600 mt-1 block">ค้นหาสัตว์ที่ต้องการบ้าน
+                                        <b>ใกล้ตัวคุณ</b> พร้อมข้อมูลสถิติเชิงลึกเพื่อการตัดสินใจ</span>
+                                </div>
+                                <div
+                                    class="bg-[#FCF3E8] p-4 rounded-2xl border-[3px] border-black flex flex-col hover:-translate-y-1 transition-transform">
+                                    <div
+                                        class="w-10 h-10 bg-[#FDB540] border-2 border-black rounded-full flex items-center justify-center mb-2">
+                                        <i data-lucide="video" class="w-5 h-5 text-black"></i>
+                                    </div>
+                                    <span class="font-black text-lg block leading-tight">Live Spots</span>
+                                    <span class="text-xs font-bold text-gray-600 mt-1 block">ไถฟีดวิดีโอสไตล์ TikTok ส่ง
+                                        <b>ไอคอนปลา (Virtual Gift)</b> เพื่อสมทบทุนอาหารทันที</span>
+                                </div>
+                                <div
+                                    class="bg-[#FCF3E8] p-4 rounded-2xl border-[3px] border-black flex flex-col hover:-translate-y-1 transition-transform">
+                                    <div
+                                        class="w-10 h-10 bg-white border-2 border-black rounded-full flex items-center justify-center mb-2">
+                                        <i data-lucide="message-circle" class="w-5 h-5 text-black"></i>
+                                    </div>
+                                    <span class="font-black text-lg block leading-tight">Direct Contact</span>
+                                    <span class="text-xs font-bold text-gray-600 mt-1 block">มีระบบ Live Chat
+                                        คุยกับอาสาสมัครตอนสตรีม และปุ่มติดต่อขอรับเลี้ยงได้โดยตรง</span>
+                                </div>
+                                <div
+                                    class="bg-[#FCF3E8] p-4 rounded-2xl border-[3px] border-black flex flex-col hover:-translate-y-1 transition-transform">
+                                    <div
+                                        class="w-10 h-10 bg-[#C2B4D6] border-2 border-black rounded-full flex items-center justify-center mb-2">
+                                        <i data-lucide="user" class="w-5 h-5 text-black"></i>
+                                    </div>
+                                    <span class="font-black text-lg block leading-tight">Gamification Profile</span>
+                                    <span class="text-xs font-bold text-gray-600 mt-1 block">บันทึกสถิติและ Level
+                                        ความภาคภูมิใจ เปลี่ยนการทำบุญเป็นเป้าหมายที่สนุกสนาน</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5: Testing & Data -->
+            <div id="ux-slide-5"
+                class="ux-slide absolute opacity-0 translate-y-16 scale-90 pointer-events-none flex flex-col items-center">
+                <div
+                    class="bg-[#FDB540] border-[8px] border-black rounded-[48px] p-10 shadow-[0_20px_0_0_rgba(0,0,0,1)] w-full max-w-5xl">
+                    <div class="flex items-center space-x-4 mb-8 justify-center">
+                        <div
+                            class="w-16 h-16 bg-white border-[4px] border-black rounded-full flex items-center justify-center shadow-[0_4px_0_0_rgba(0,0,0,1)]">
+                            <i data-lucide="flask-conical" class="w-8 h-8"></i>
+                        </div>
+                        <h2 class="text-4xl font-black">4. Testing & 5. Analysis</h2>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6">
+                        <!-- Left: Testing -->
+                        <div
+                            class="bg-white border-[4px] border-black rounded-[32px] p-6 shadow-[0_8px_0_0_rgba(0,0,0,1)] flex flex-col relative">
+                            <i data-lucide="check-square" class="absolute top-6 right-6 w-10 h-10 text-gray-200"></i>
+                            <div
+                                class="bg-[#C2B4D6] border-2 border-black rounded-full px-4 py-1 font-black text-sm w-fit mb-4 shadow-sm">
+                                Phase 4: Usability Testing</div>
+                            <ul class="space-y-5 mt-2">
+                                <li class="flex items-start">
+                                    <i data-lucide="smartphone"
+                                        class="w-8 h-8 mr-4 mt-1 text-black bg-[#FCF3E8] rounded-full p-1 border-2 border-black"></i>
+                                    <div><span class="font-black text-xl">ทดสอบ User Flow:</span> <span
+                                            class="text-sm font-bold text-gray-600 block mt-1">ให้กลุ่มตัวอย่างทดลองกดดูรายละเอียดสัตว์เลี้ยง
+                                            กด Favorite และส่งของขวัญในห้องไลฟ์</span></div>
+                                </li>
+                                <li class="flex items-start">
+                                    <i data-lucide="message-square"
+                                        class="w-8 h-8 mr-4 mt-1 text-black bg-[#FCF3E8] rounded-full p-1 border-2 border-black"></i>
+                                    <div><span class="font-black text-xl">Feedback ที่ได้รับ:</span> <span
+                                            class="text-sm font-bold text-gray-600 block mt-1">ผู้ใช้ชอบที่เห็นสถิติสัตว์ชัดเจน
+                                            ช่วยให้ตัดสินใจรับเลี้ยงง่ายขึ้น และชอบแอนิเมชันปลาเด้งในไลฟ์</span></div>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Right: Analysis & Future -->
+                        <div class="flex flex-col gap-5">
+                            <div
+                                class="bg-white border-[4px] border-black rounded-[32px] p-6 shadow-[0_8px_0_0_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform">
+                                <div
+                                    class="bg-[#F4B5A4] border-2 border-black rounded-full px-4 py-1 font-black text-sm w-fit mb-3 shadow-sm">
+                                    Phase 5: Analysis & Iterate</div>
+                                <h4 class="font-black text-xl flex items-center"><i data-lucide="trending-up"
+                                        class="w-6 h-6 mr-2"></i> การปรับปรุงจาก Pain Points</h4>
+                                <p class="text-sm font-bold text-gray-600 mt-2">ปรับแก้ปุ่ม <b>"Adopt Now"</b>
+                                    ให้มีขนาดใหญ่และสีตัดกันเด่นชัด (Brutalism) เพื่อกระตุ้น Call to Action
+                                    ให้เกิดการรับเลี้ยงจริง</p>
+                            </div>
+
+                            <div
+                                class="bg-[#111827] text-white border-[4px] border-black rounded-[32px] p-6 shadow-[0_8px_0_0_rgba(253,181,64,1)] relative overflow-hidden group hover:-translate-y-1 transition-transform">
+                                <i data-lucide="rocket"
+                                    class="absolute -right-2 -bottom-2 w-24 h-24 text-white opacity-10 group-hover:scale-110 transition-transform duration-500"></i>
+                                <h4 class="font-black text-2xl text-[#FDB540] mb-2 flex items-center">แนวทางในอนาคต
+                                    (Future Vision)</h4>
+                                <p class="text-sm font-bold text-gray-300 leading-relaxed">พัฒนา <b>"Video Call
+                                        Screening"</b> คัดกรองผู้รับเลี้ยง และเชื่อมต่อ <b>Smart IoT Feeder</b>
+                                    ที่จ่ายอาหารจริงเมื่อมีคนกดส่งของขวัญในแอป</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- The Phone Device (Appears later) -->
+        <div id="phone-wrapper"
+            class="phone-flat transition-all duration-[1500ms] ease-[cubic-bezier(0.25,1,0.5,1)] relative z-10 pointer-events-none">
+
+            <!-- ================= APP TOOLTIPS ================= -->
+            <div id="tooltip-1"
+                class="app-tooltip absolute left-[calc(100%+60px)] top-[20%] w-72 bg-white border-[4px] border-black rounded-2xl p-5 shadow-[0_8px_0_0_rgba(0,0,0,1)] translate-y-8 z-50">
+                <div class="absolute top-1/2 -left-16 w-16 border-t-[4px] border-black border-dashed"></div>
+                <div
+                    class="w-10 h-10 bg-[#C2B4D6] rounded-full flex items-center justify-center border-2 border-black mb-3">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-black text-xl mb-1">Playful UI</h3>
+                <p class="font-bold text-sm text-gray-600">สีสันพาสเทลและดีไซน์ขอบมน (Neo-brutalism)
+                    ช่วยดึงดูดความสนใจตั้งแต่หน้าแรก</p>
+            </div>
+
+            <div id="tooltip-2"
+                class="app-tooltip absolute right-[calc(100%+60px)] top-[30%] w-72 bg-white border-[4px] border-black rounded-2xl p-5 shadow-[0_8px_0_0_rgba(0,0,0,1)] translate-y-8 z-50">
+                <div class="absolute top-1/2 -right-16 w-16 border-t-[4px] border-black border-dashed"></div>
+                <div
+                    class="w-10 h-10 bg-[#F4B5A4] rounded-full flex items-center justify-center border-2 border-black mb-3">
+                    <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-black text-xl mb-1">Smart Discovery</h3>
+                <p class="font-bold text-sm text-gray-600">ค้นหาสัตว์เลี้ยงที่อยู่ใกล้ตัว พร้อมหมวดหมู่ที่ใช้งานง่าย
+                    แอนิเมชันลื่นไหล</p>
+            </div>
+
+            <div id="tooltip-3"
+                class="app-tooltip absolute left-[calc(100%+60px)] top-[40%] w-72 bg-white border-[4px] border-black rounded-2xl p-5 shadow-[0_8px_0_0_rgba(0,0,0,1)] translate-y-8 z-50">
+                <div class="absolute top-1/2 -left-16 w-16 border-t-[4px] border-black border-dashed"></div>
+                <div
+                    class="w-10 h-10 bg-[#FDB540] rounded-full flex items-center justify-center border-2 border-black mb-3">
+                    <i data-lucide="video" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-black text-xl mb-1">Live Spots Feed</h3>
+                <p class="font-bold text-sm text-gray-600">ฟีเจอร์หลัก! ดูไลฟ์สดสไตล์ TikTok เพื่อแชทและแจกอาหารให้น้องๆ
+                    แบบเรียลไทม์</p>
+            </div>
+
+            <div id="tooltip-4"
+                class="app-tooltip absolute right-[calc(100%+60px)] top-[25%] w-72 bg-white border-[4px] border-black rounded-2xl p-5 shadow-[0_8px_0_0_rgba(0,0,0,1)] translate-y-8 z-50">
+                <div class="absolute top-1/2 -right-16 w-16 border-t-[4px] border-black border-dashed"></div>
+                <div
+                    class="w-10 h-10 bg-[#F4B5A4] rounded-full flex items-center justify-center border-2 border-black mb-3">
+                    <i data-lucide="heart" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-black text-xl mb-1">Saved Friends</h3>
+                <p class="font-bold text-sm text-gray-600">รายการโปรดสำหรับติดตามน้องแมวที่คุณสนใจรับเลี้ยงในอนาคต</p>
+            </div>
+
+            <div id="tooltip-5"
+                class="app-tooltip absolute right-[calc(100%+60px)] top-[45%] w-72 bg-white border-[4px] border-black rounded-2xl p-5 shadow-[0_8px_0_0_rgba(0,0,0,1)] translate-y-8 z-50">
+                <div class="absolute top-1/2 -right-16 w-16 border-t-[4px] border-black border-dashed"></div>
+                <div
+                    class="w-10 h-10 bg-[#C2B4D6] rounded-full flex items-center justify-center border-2 border-black mb-3">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-black text-xl mb-1">Gamification Profile</h3>
+                <p class="font-bold text-sm text-gray-600">สะสมประสบการณ์การช่วยเหลือ (Angel Tier)
+                    สร้างความภูมิใจในการเป็นผู้ให้</p>
+            </div>
+
+            <div id="tooltip-6"
+                class="app-tooltip absolute left-[calc(100%+60px)] top-[20%] w-72 bg-white border-[4px] border-black rounded-2xl p-5 shadow-[0_8px_0_0_rgba(0,0,0,1)] translate-y-8 z-50">
+                <div class="absolute top-1/2 -left-16 w-16 border-t-[4px] border-black border-dashed"></div>
+                <div
+                    class="w-10 h-10 bg-[#A8D8D6] rounded-full flex items-center justify-center border-2 border-black mb-3">
+                    <i data-lucide="info" class="w-5 h-5"></i>
+                </div>
+                <h3 class="font-black text-xl mb-1">Pet Details</h3>
+                <p class="font-bold text-sm text-gray-600">แสดงสถิติและปุ่ม Adopt Now ให้โดดเด่น (Call to Action)
+                    พร้อมช่องทางติดต่อโดยตรง</p>
+            </div>
+
+            <div id="tooltip-7"
+                class="app-tooltip absolute left-[calc(100%+60px)] bottom-[15%] w-72 bg-white border-[4px] border-black rounded-2xl p-5 shadow-[0_8px_0_0_rgba(0,0,0,1)] translate-y-8 z-50">
+                <div class="absolute top-1/2 -left-16 w-16 border-t-[4px] border-black border-dashed"></div>
+                <div
+                    class="w-10 h-10 bg-[#FDB540] rounded-full flex items-center justify-center border-2 border-black mb-3">
+                    <i data-lucide="gift" class="w-5 h-5 text-black fill-current"></i>
+                </div>
+                <h3 class="font-black text-xl mb-1">Interactive Charity</h3>
+                <p class="font-bold text-sm text-gray-600">กดส่งของขวัญและแชทแบบเรียลไทม์
+                    (จำลองการให้เงินสมทบทุนหรือเครื่องให้อาหารอัตโนมัติ)</p>
+            </div>
+
+            <!-- ================= APP CONTAINER ================= -->
+            <div id="app-container"
+                class="w-[375px] h-[812px] bg-[#FCF3E8] rounded-[40px] border-[12px] border-gray-900 overflow-hidden relative screen-off transition-colors duration-500 shadow-inner">
+
+                <div id="presentation-blocker" class="absolute inset-0 z-[9998]"></div>
+
+                <div id="screen-lock"
+                    class="absolute inset-0 z-[9999] overflow-hidden bg-[#FDB540] flex flex-col items-center transition-opacity duration-1000 ease-in-out">
+                    <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+                        class="absolute inset-0 w-full h-full object-cover" alt="Wallpaper">
+                    <div class="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-black/60 to-transparent"></div>
+                    <div class="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    <div class="relative z-10 mt-20 flex flex-col items-center">
+                        <i data-lucide="lock" class="w-5 h-5 mb-2 text-white drop-shadow-md"></i>
+                        <h1 class="text-8xl font-black mb-1 text-white tracking-tighter drop-shadow-xl"
+                            style="font-family: -apple-system, BlinkMacSystemFont, sans-serif;">09:41</h1>
+                        <p class="text-xl font-bold text-white drop-shadow-md">Friday, Feb 20</p>
+                    </div>
+                    <div class="flex-1 w-full relative"></div>
+                    <div class="relative z-10 mb-8 flex flex-col items-center opacity-90 animate-pulse">
+                        <span class="text-xs font-black mb-3 tracking-[0.2em] text-white uppercase drop-shadow-md">Swipe
+                            up to open</span>
+                        <div class="w-32 h-1.5 bg-white rounded-full shadow-lg"></div>
+                    </div>
+                </div>
+
+                <!-- Status Bar -->
+                <div id="status-bar"
+                    class="absolute top-0 w-full h-12 flex justify-between items-center px-6 pt-2 z-50 transition-colors duration-300 text-black pointer-events-none">
+                    <span class="text-sm font-bold tracking-wider drop-shadow-md">9:41</span>
+                    <div class="flex space-x-2 drop-shadow-md">
+                        <i data-lucide="wifi" class="w-4 h-4"></i>
+                        <i data-lucide="battery-full" class="w-5 h-5"></i>
+                    </div>
+                </div>
+
+                <!-- App Screens -->
+
+                <!-- 1. Splash -->
+                <div id="screen-splash" class="flex-1 flex flex-col relative h-full animate-fade-in">
+                    <div class="relative w-full h-[45%] flex justify-between px-4 pt-0">
+                        <div
+                            class="w-[20%] h-[60%] bg-[#C2B4D6] rounded-b-[40px] relative mt-0 flex flex-col items-center justify-end pb-4 shadow-sm border-2 border-[#FCF3E8]">
+                            <img src="https://images.unsplash.com/photo-1597626133663-53df9633b799?w=150&h=150&fit=crop"
+                                class="w-[50px] h-[50px] rounded-full object-cover border-2 border-white translate-y-8 shadow-md" />
+                            <span class="absolute -bottom-8 font-extrabold text-sm">Coco</span>
+                        </div>
+                        <div
+                            class="w-[20%] h-[90%] bg-[#FDB540] rounded-b-[40px] relative mt-0 flex flex-col items-center justify-end pb-4 shadow-sm border-2 border-[#FCF3E8]">
+                            <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=150&h=150&fit=crop"
+                                class="w-[50px] h-[50px] rounded-full object-cover border-2 border-white translate-y-8 shadow-md" />
+                            <span class="absolute -bottom-8 font-extrabold text-sm">Milo</span>
+                        </div>
+                        <div
+                            class="w-[20%] h-[70%] bg-[#F4B5A4] rounded-b-[40px] relative mt-0 flex flex-col items-center justify-end pb-4 shadow-sm border-2 border-[#FCF3E8]">
+                            <img src="https://images.unsplash.com/photo-1517849845537-4d257902454a?w=150&h=150&fit=crop"
+                                class="w-[50px] h-[50px] rounded-full object-cover border-2 border-white translate-y-8 shadow-md" />
+                            <span class="absolute -bottom-8 font-extrabold text-sm">Rocky</span>
+                        </div>
+                        <div
+                            class="w-[20%] h-[80%] bg-[#A8D8D6] rounded-b-[40px] relative mt-0 flex flex-col items-center justify-end pb-4 shadow-sm border-2 border-[#FCF3E8]">
+                            <img src="https://images.unsplash.com/photo-1513360371669-4adf3dd7dff8?w=150&h=150&fit=crop"
+                                class="w-[50px] h-[50px] rounded-full object-cover border-2 border-white translate-y-8 shadow-md" />
+                            <span class="absolute -bottom-8 font-extrabold text-sm">Luna</span>
+                        </div>
+                    </div>
+                    <div class="absolute top-[50%] left-8 opacity-20 text-[#FDB540] animate-float"
+                        style="--rot: -20deg;"><i data-lucide="paw-print" class="w-6 h-6"></i></div>
+                    <div class="absolute top-[60%] right-10 opacity-20 text-[#FDB540] animate-float"
+                        style="--rot: 30deg; animation-delay: 1s;"><i data-lucide="paw-print" class="w-4 h-4"></i></div>
+                    <div class="flex-1 flex flex-col justify-end px-6 pb-10 relative z-10">
+                        <h1 class="text-[42px] font-black leading-[1.1] text-center tracking-tight mb-4">Adopt your
+                            the<br />best friend</h1>
+                        <p class="text-center text-gray-500 text-xs font-semibold px-4 mb-10 leading-relaxed">Adoption
+                            saves a friend today and makes room for another tomorrow.</p>
+                        <button onclick="navigateTo('home')"
+                            class="bg-[#FDB540] text-black font-extrabold text-lg py-4 rounded-[30px] border-2 border-black w-full active:scale-95 active:shadow-none transition-all duration-200"
+                            style="box-shadow: 0 6px 0 0 rgba(0,0,0,1);">Explore</button>
+                    </div>
+                </div>
+
+                <!-- 2. Home Screen -->
+                <div id="screen-home"
+                    class="hidden flex-1 flex flex-col h-full bg-[#FCF3E8] pt-12 relative animate-fade-in">
+                    <div class="px-6 flex-1 overflow-y-auto pb-32 no-scrollbar">
+                        <div class="flex justify-between items-center mt-4">
+                            <h2 class="text-3xl font-black leading-tight w-3/4">Let's Find a<br />Cute Friend</h2>
+                        </div>
+
+                        <div
+                            class="mt-6 bg-[#C2B4D6] rounded-[24px] p-5 border-[3px] border-black shadow-[0_4px_0_0_rgba(0,0,0,1)] flex items-center justify-between cursor-pointer active:scale-95 transition-transform">
+                            <div>
+                                <span
+                                    class="bg-white text-xs font-black px-3 py-1 rounded-full border border-black mb-2 inline-block shadow-sm">Urgent
+                                    Help</span>
+                                <h3 class="font-black text-lg leading-tight text-black">ช่วยเหลือน้องแมว<br>บ้านพักพิง A
+                                </h3>
+                            </div>
+                            <div
+                                class="w-14 h-14 bg-white rounded-full border-[3px] border-black flex items-center justify-center text-[#C2B4D6] shadow-sm">
+                                <i data-lucide="heart-handshake" class="w-6 h-6 text-black"></i>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex items-center space-x-3 group">
+                            <div
+                                class="flex-1 bg-[#F5E6D3] h-14 rounded-full flex items-center px-4 transition-all duration-300 border border-transparent focus-within:border-gray-300 focus-within:bg-white shadow-inner">
+                                <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                                <input type="text" placeholder="Search here...."
+                                    class="bg-transparent border-none outline-none ml-2 w-full text-sm font-semibold text-gray-700" />
+                            </div>
+                            <button
+                                class="w-14 h-14 bg-[#FDB540] rounded-full flex items-center justify-center shadow-[0_3px_0_0_rgba(0,0,0,1)] border-2 border-black active:scale-90 transition-transform"><i
+                                    data-lucide="sliders-horizontal" class="w-5 h-5"></i></button>
+                        </div>
+                        <div class="mt-8">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-bold">Categories</h3><span
+                                    class="text-sm font-bold text-gray-500 cursor-pointer hover:text-black">See
+                                    all</span>
+                            </div>
+                            <div id="home-categories" class="flex space-x-4 overflow-x-auto pb-2 no-scrollbar"></div>
+                        </div>
+                        <div class="mt-8 mb-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-bold">Near By</h3><span
+                                    class="text-sm font-bold text-gray-500 cursor-pointer hover:text-black">See
+                                    all</span>
+                            </div>
+                            <div id="home-pets" class="flex space-x-4 overflow-x-auto pb-4 no-scrollbar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Live Feed Screen -->
+                <div id="screen-feed"
+                    class="hidden flex-1 flex flex-col h-full bg-[#FCF3E8] pt-12 relative overflow-hidden animate-fade-in">
+                    <div class="px-6 flex justify-between items-center mt-4 mb-2 flex-shrink-0 z-10 relative">
+                        <h2 class="text-3xl font-black leading-tight">Live<br />Spots</h2>
+                        <div
+                            class="w-12 h-12 bg-[#A8D8D6] rounded-full flex items-center justify-center border-2 border-black shadow-[0_3px_0_0_rgba(0,0,0,1)]">
+                            <i data-lucide="play-square" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                    <div id="feed-container"
+                        class="flex-1 overflow-y-scroll snap-y-container no-scrollbar w-full relative z-0"></div>
+                </div>
+
+                <!-- 4. Favorites Screen -->
+                <div id="screen-favorites"
+                    class="hidden flex-1 flex flex-col h-full bg-[#FCF3E8] pt-12 relative animate-fade-in">
+                    <div class="px-6 flex-1 overflow-y-auto pb-32 no-scrollbar">
+                        <div class="flex justify-between items-center mt-4 mb-6">
+                            <h2 class="text-3xl font-black leading-tight w-3/4">Saved<br />Friends</h2>
+                            <div
+                                class="w-12 h-12 bg-[#F4B5A4] rounded-full flex items-center justify-center border-2 border-black shadow-[0_3px_0_0_rgba(0,0,0,1)]">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                    fill="black" stroke="none">
+                                    <path
+                                        d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div id="favorites-grid" class="grid grid-cols-2 gap-4"></div>
+                    </div>
+                </div>
+
+                <!-- 5. Profile Screen -->
+                <div id="screen-profile"
+                    class="hidden flex-1 flex flex-col h-full bg-[#FCF3E8] pt-12 relative animate-fade-in">
+                    <div class="px-6 flex-1 overflow-y-auto pb-32 no-scrollbar">
+                        <div class="flex justify-between items-center mt-4 mb-6">
+                            <h2 class="text-3xl font-black leading-tight w-3/4">My<br />Profile</h2>
+                            <button
+                                class="w-12 h-12 bg-white rounded-full flex items-center justify-center border-2 border-black shadow-[0_3px_0_0_rgba(0,0,0,1)] active:scale-90 transition-transform">
+                                <i data-lucide="settings" class="w-5 h-5 text-black"></i>
+                            </button>
+                        </div>
+
+                        <div
+                            class="w-full bg-[#C2B4D6] rounded-[32px] border-[3px] border-black shadow-[0_6px_0_0_rgba(0,0,0,1)] p-6 flex flex-col items-center mb-6 relative overflow-hidden">
+                            <div class="absolute top-0 right-0 opacity-20 text-white animate-float"><i
+                                    data-lucide="paw-print"
+                                    class="w-20 h-20 rotate-12 translate-x-4 -translate-y-4"></i></div>
+                            <div class="relative mb-4 z-10 cursor-pointer active:scale-95 transition-transform">
+                                <img src="https://avatars.githubusercontent.com/u/176893941?v=4"
+                                    class="w-24 h-24 rounded-full border-[3px] border-black shadow-[0_4px_0_0_rgba(0,0,0,1)] object-cover bg-white"
+                                    alt="Profile" />
+                                <div
+                                    class="absolute bottom-0 right-0 bg-[#FDB540] p-1.5 rounded-full border-2 border-black shadow-[0_2px_0_0_rgba(0,0,0,1)] text-black">
+                                    <i data-lucide="more-horizontal" class="w-3 h-3"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-2xl font-black text-black mb-1 z-10">Hex</h3>
+                            <p class="text-sm font-bold text-gray-800 z-10 mb-6">Animal Lover & Volunteer 🐶</p>
+
+                            <div
+                                class="w-full flex justify-between bg-white/50 backdrop-blur-sm rounded-2xl border-[3px] border-black p-4 z-10 shadow-[0_4px_0_0_rgba(0,0,0,1)]">
+                                <div class="flex flex-col items-center flex-1 border-r-2 border-black/20"><span
+                                        class="text-xl font-black text-black">2</span><span
+                                        class="text-[10px] font-extrabold text-gray-700 uppercase tracking-wider">Adopted</span>
+                                </div>
+                                <div class="flex flex-col items-center flex-1 border-r-2 border-black/20"><span
+                                        class="text-xl font-black text-black">12</span><span
+                                        class="text-[10px] font-extrabold text-gray-700 uppercase tracking-wider">Saved</span>
+                                </div>
+                                <div class="flex flex-col items-center flex-1"><span
+                                        class="text-xl font-black text-black">45</span><span
+                                        class="text-[10px] font-extrabold text-gray-700 uppercase tracking-wider">Gifts</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="bg-white border-[3px] border-black rounded-2xl p-4 shadow-[0_4px_0_0_rgba(0,0,0,1)] mb-6">
+                            <div class="flex justify-between items-end mb-2">
+                                <span class="font-black text-sm text-black flex items-center"><i data-lucide="star"
+                                        class="w-4 h-4 mr-1 text-[#FDB540] fill-[#FDB540]"></i> Angel Tier 😇</span>
+                                <span class="text-xs font-bold text-gray-500">45/50 Gifts</span>
+                            </div>
+                            <div
+                                class="w-full h-4 bg-gray-200 rounded-full border-2 border-black overflow-hidden relative">
+                                <div
+                                    class="h-full bg-[#FDB540] w-[90%] border-r-2 border-black flex items-center justify-end pr-2">
+                                    <div class="w-2 h-2 bg-white rounded-full opacity-50"></div>
+                                </div>
+                            </div>
+                            <p class="text-[10px] font-bold text-gray-500 mt-2 text-center">อีกเพียง 5
+                                ของขวัญเพื่อปลดล็อก Badge ใหม่!</p>
+                        </div>
+
+                        <div class="flex flex-col space-y-4">
+                            <div
+                                class="w-full flex items-center justify-between bg-white rounded-2xl p-4 border-[3px] border-black shadow-[0_4px_0_0_rgba(0,0,0,1)] transition-all cursor-pointer active:scale-95 active:translate-y-1 active:shadow-none group">
+                                <div class="flex items-center space-x-4">
+                                    <div
+                                        class="w-10 h-10 bg-[#F4B5A4] rounded-full flex items-center justify-center border-2 border-black shadow-sm text-black group-hover:scale-110 transition-transform">
+                                        <i data-lucide="user" class="w-4 h-4"></i>
+                                    </div><span class="font-bold text-base text-black">Edit Profile</span>
+                                </div>
+                                <div class="flex items-center space-x-2"><i data-lucide="chevron-right"
+                                        class="w-5 h-5 text-gray-800"></i></div>
+                            </div>
+                            <div
+                                class="w-full flex items-center justify-between bg-white rounded-2xl p-4 border-[3px] border-black shadow-[0_4px_0_0_rgba(0,0,0,1)] transition-all cursor-pointer active:scale-95 active:translate-y-1 active:shadow-none group">
+                                <div class="flex items-center space-x-4">
+                                    <div
+                                        class="w-10 h-10 bg-[#A8D8D6] rounded-full flex items-center justify-center border-2 border-black shadow-sm text-black group-hover:scale-110 transition-transform">
+                                        <i data-lucide="bell" class="w-4 h-4"></i>
+                                    </div><span class="font-bold text-base text-black">Notifications</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div
+                                        class="bg-red-500 text-white text-xs font-black w-6 h-6 rounded-full flex items-center justify-center border border-black shadow-sm animate-pulse">
+                                        2</div><i data-lucide="chevron-right" class="w-5 h-5 text-gray-800"></i>
+                                </div>
+                            </div>
+                            <div
+                                class="w-full flex items-center justify-between bg-white rounded-2xl p-4 border-[3px] border-black shadow-[0_4px_0_0_rgba(0,0,0,1)] transition-all cursor-pointer active:scale-95 active:translate-y-1 active:shadow-none group">
+                                <div class="flex items-center space-x-4">
+                                    <div
+                                        class="w-10 h-10 bg-[#FDB540] rounded-full flex items-center justify-center border-2 border-black shadow-sm text-black group-hover:scale-110 transition-transform">
+                                        <i data-lucide="heart" class="w-4 h-4"></i>
+                                    </div><span class="font-bold text-base text-black">My Favorites</span>
+                                </div>
+                                <div class="flex items-center space-x-2"><i data-lucide="chevron-right"
+                                        class="w-5 h-5 text-gray-800"></i></div>
+                            </div>
+                            <div
+                                class="w-full flex items-center justify-between bg-white rounded-2xl p-4 border-[3px] border-black shadow-[0_4px_0_0_rgba(0,0,0,1)] transition-all cursor-pointer active:scale-95 active:translate-y-1 active:shadow-none group">
+                                <div class="flex items-center space-x-4">
+                                    <div
+                                        class="w-10 h-10 bg-white rounded-full flex items-center justify-center border-2 border-black shadow-sm text-black group-hover:scale-110 transition-transform">
+                                        <i data-lucide="log-out" class="w-4 h-4 text-red-500"></i>
+                                    </div><span class="font-bold text-base text-red-500">Log Out</span>
+                                </div>
+                                <div class="flex items-center space-x-2"><i data-lucide="chevron-right"
+                                        class="w-5 h-5 text-gray-800"></i></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Details Screen -->
+                <div id="screen-details"
+                    class="hidden flex-1 flex flex-col h-full bg-[#FCF3E8] relative animate-fade-in z-40">
+                    <div class="absolute top-20 left-10 opacity-10 text-[#FDB540] animate-float"
+                        style="--rot: -20deg; animation-delay: 0s;"><i data-lucide="paw-print" class="w-10 h-10"></i>
+                    </div>
+                    <div class="absolute top-40 right-10 opacity-10 text-[#FDB540] animate-float"
+                        style="--rot: 30deg; animation-delay: 1s;"><i data-lucide="paw-print" class="w-14 h-14"></i>
+                    </div>
+                    <div class="flex justify-between items-center px-6 pt-16 relative z-20">
+                        <button onclick="navigateTo('home')"
+                            class="w-10 h-10 bg-white rounded-full flex items-center justify-center border-2 border-black shadow-[0_2px_0_0_rgba(0,0,0,1)] active:scale-90 transition-transform"><i
+                                data-lucide="arrow-left" class="w-5 h-5"></i></button>
+                        <button
+                            class="w-10 h-10 bg-white rounded-full flex items-center justify-center border-2 border-black shadow-[0_2px_0_0_rgba(0,0,0,1)] active:scale-90 transition-transform"><i
+                                data-lucide="more-horizontal" class="w-5 h-5"></i></button>
+                    </div>
+                    <div class="w-full h-[40%] relative z-10 flex justify-center items-end pb-8 flex-shrink-0">
+                        <img id="detail-image" src="" alt="Pet"
+                            class="w-[85%] h-full object-cover object-center mix-blend-multiply mask-image-bottom transition-transform duration-700 hover:scale-105" />
+                    </div>
+                    <div
+                        class="flex-1 bg-[#F5E6D3] rounded-t-[40px] px-6 pt-6 pb-12 flex flex-col relative z-20 -mt-8 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] border-t-[3px] border-black overflow-y-auto no-scrollbar">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h2 id="detail-name" class="text-3xl font-black mb-1 text-black drop-shadow-sm">Name
+                                </h2>
+                                <div class="flex items-center text-gray-600 space-x-1"><i data-lucide="map-pin"
+                                        class="w-3.5 h-3.5"></i><span id="detail-distance"
+                                        class="text-sm font-bold">Distance</span></div>
+                            </div>
+                            <button
+                                class="w-12 h-12 bg-white rounded-full flex items-center justify-center border-2 border-black shadow-[0_3px_0_0_rgba(0,0,0,1)] text-black active:scale-75 transition-transform"><svg
+                                    xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                    fill="black" stroke="none">
+                                    <path
+                                        d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                                </svg></button>
+                        </div>
+
+                        <div class="flex justify-between mt-6 space-x-4">
+                            <div
+                                class="flex-1 bg-white border-[3px] border-black shadow-[0_3px_0_0_rgba(0,0,0,1)] rounded-2xl p-4 flex flex-col items-center hover:-translate-y-1 transition-transform duration-300">
+                                <span class="text-gray-500 text-xs font-bold mb-1">Gender</span><span id="detail-gender"
+                                    class="font-black text-sm">-</span>
+                            </div>
+                            <div
+                                class="flex-1 bg-white border-[3px] border-black shadow-[0_3px_0_0_rgba(0,0,0,1)] rounded-2xl p-4 flex flex-col items-center hover:-translate-y-1 transition-transform duration-300">
+                                <span class="text-gray-500 text-xs font-bold mb-1">Age</span><span id="detail-age"
+                                    class="font-black text-sm">-</span>
+                            </div>
+                            <div
+                                class="flex-1 bg-white border-[3px] border-black shadow-[0_3px_0_0_rgba(0,0,0,1)] rounded-2xl p-4 flex flex-col items-center hover:-translate-y-1 transition-transform duration-300">
+                                <span class="text-gray-500 text-xs font-bold mb-1">Weight</span><span id="detail-weight"
+                                    class="font-black text-sm">-</span>
+                            </div>
+                        </div>
+
+                        <div
+                            class="flex items-center mt-6 p-3 rounded-2xl hover:bg-[#EBE1D2] transition-colors duration-300 -mx-3 cursor-pointer">
+                            <img id="detail-owner-avatar" src="" alt="Owner"
+                                class="w-14 h-14 rounded-full object-cover mr-4 border-[3px] border-black shadow-[0_2px_0_0_rgba(0,0,0,1)]" />
+                            <div class="flex-1">
+                                <h4 id="detail-owner-name" class="font-black text-[15px]">Name</h4><span
+                                    id="detail-owner-role" class="text-xs text-gray-500 font-bold">Role</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button
+                                    class="w-10 h-10 bg-[#FDB540] rounded-full flex items-center justify-center border-2 border-black shadow-[0_2px_0_0_rgba(0,0,0,1)] active:scale-90 active:translate-y-1 active:shadow-none transition-all"><i
+                                        data-lucide="message-circle" class="w-[18px] h-[18px]"></i></button>
+                                <button
+                                    class="w-10 h-10 bg-white rounded-full flex items-center justify-center border-2 border-black shadow-[0_2px_0_0_rgba(0,0,0,1)] active:scale-90 transition-all"><i
+                                        data-lucide="phone" class="w-[18px] h-[18px] text-black"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 mb-6 flex-1">
+                            <p class="text-sm text-gray-700 font-semibold leading-relaxed"><span
+                                    id="detail-desc"></span> <span
+                                    class="text-black font-extrabold cursor-pointer hover:underline">Read More</span>
+                            </p>
+                        </div>
+                        <button
+                            class="bg-[#FDB540] text-black font-black text-lg py-4 rounded-[30px] border-[4px] border-black w-full active:scale-95 active:translate-y-1 active:shadow-none transition-all duration-200 mt-auto"
+                            style="box-shadow: 0 6px 0 0 rgba(0,0,0,1);">Adopt Now</button>
+                    </div>
+                </div>
+
+                <!-- Live Room Screen -->
+                <div id="screen-liveRoom"
+                    class="hidden absolute inset-0 z-50 bg-black flex flex-col h-full animate-fade-in overflow-hidden">
+                    <img id="live-cover" src="" alt="Live"
+                        class="absolute inset-0 w-full h-full object-cover opacity-90 animate-slow-zoom" />
+                    <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/90"></div>
+
+                    <div class="relative z-10 px-4 pt-14 flex justify-between items-start">
+                        <div
+                            class="flex items-center bg-black/40 backdrop-blur-md rounded-full p-1 pr-4 border border-white/20">
+                            <button onclick="leaveLiveRoom()"
+                                class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white mr-2 active:scale-90 transition-transform"><i
+                                    data-lucide="x" class="w-5 h-5"></i></button>
+                            <img id="live-avatar" src="" class="w-10 h-10 rounded-full border-2 border-[#FDB540]"
+                                alt="Host" />
+                            <div class="ml-2 flex flex-col"><span id="live-host"
+                                    class="text-white font-bold text-sm leading-tight">Host</span><span id="live-loc"
+                                    class="text-[#FDB540] text-[10px] font-black">Loc</span></div>
+                            <button
+                                class="ml-3 bg-[#FDB540] text-black text-xs font-black px-3 py-1 rounded-full border border-black shadow-[0_2px_0_0_rgba(0,0,0,1)] active:scale-90">Follow</button>
+                        </div>
+                        <div class="flex flex-col items-end space-y-2">
+                            <div
+                                class="bg-red-500 text-white font-black text-xs px-3 py-1.5 rounded-full shadow-lg animate-pulse border border-white/20">
+                                LIVE</div>
+                            <div
+                                class="bg-black/40 backdrop-blur-md text-white font-bold text-xs px-3 py-1.5 rounded-full flex items-center border border-white/20">
+                                <i data-lucide="user" class="w-3 h-3 mr-1"></i> <span
+                                    id="live-viewers-count">1.2k</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="live-animations" class="flex-1 relative"></div>
+                    <div class="relative z-20 px-4 pb-8 flex flex-col justify-end w-full">
+                        <div id="live-chat"
+                            class="w-[75%] h-[250px] overflow-y-auto no-scrollbar mask-gradient-top flex flex-col justify-end pb-4 space-y-2">
+                        </div>
+                        <div class="flex items-center space-x-3 mt-2">
+                            <form onsubmit="handleSendMessage(event)" class="flex-1 relative group">
+                                <input type="text" id="chat-input" placeholder="Say something..."
+                                    class="w-full bg-black/40 backdrop-blur-md text-white border border-white/20 rounded-full h-12 pl-4 pr-10 text-sm focus:outline-none focus:border-[#FDB540] transition-colors"
+                                    autocomplete="off" />
+                                <button type="submit" id="chat-send-btn"
+                                    class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-[#FDB540] rounded-full flex items-center justify-center text-black active:scale-90"><i
+                                        data-lucide="send" class="w-3.5 h-3.5"></i></button>
+                                <div id="chat-smile-icon"
+                                    class="absolute right-4 top-1/2 -translate-y-1/2 text-white/50"><i
+                                        data-lucide="smile" class="w-5 h-5"></i></div>
+                            </form>
+                            <div class="flex space-x-2">
+                                <button onclick="handleSendGift('gift')"
+                                    class="w-12 h-12 bg-[#C2B4D6] rounded-full flex items-center justify-center border-[2px] border-black shadow-[0_3px_0_0_rgba(0,0,0,1)] active:scale-90 active:translate-y-1 active:shadow-none transition-all"><i
+                                        data-lucide="gift" class="w-5 h-5 text-black"></i></button>
+                                <button onclick="handleSendGift('fish')"
+                                    class="w-12 h-12 bg-[#FDB540] rounded-full flex items-center justify-center border-[2px] border-black shadow-[0_3px_0_0_rgba(0,0,0,1)] active:scale-90 active:translate-y-1 active:shadow-none transition-all relative">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                        fill="currentColor" stroke="none" class="text-black">
+                                        <path
+                                            d="M6.5 12c.94-3.46 4.94-6 8.5-6 1.11 0 2.2.28 3.14.82-1.35 1.5-2.14 3.51-2.14 5.68 0 2.17.79 4.18 2.14 5.68-.94.54-2.03.82-3.14.82-3.56 0-7.56-2.54-8.5-6Z" />
+                                        <path
+                                            d="M18.14 6.82A6.98 6.98 0 0 0 22 12a6.98 6.98 0 0 0-3.86 5.18 8.02 8.02 0 0 1-2.14-5.18 8.02 8.02 0 0 1 2.14-5.18Z" />
+                                        <path d="M6.5 12a4.5 4.5 0 0 0-4.5 4.5V20l3-3a13 13 0 0 0 1.5-5Z" />
+                                        <path d="M6.5 12a4.5 4.5 0 0 1-4.5-4.5V4l3 3a13 13 0 0 1 1.5 5Z" />
+                                        <circle cx="15" cy="12" r="1" fill="white" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Navigation -->
+                <div id="bottom-nav"
+                    class="hidden absolute bottom-8 left-0 right-0 flex justify-center z-50 pointer-events-none">
+                    <div class="px-6 py-4 rounded-full flex items-center space-x-8 shadow-[0_4px_0_0_rgba(0,0,0,1)] border-[3px] border-black bg-[#FCF3E8] text-gray-400 pointer-events-auto transition-colors"
+                        id="nav-container">
+                        <button onclick="navigateTo('home')" id="nav-home"
+                            class="nav-btn transition-all duration-300"><i data-lucide="home"
+                                class="w-6 h-6"></i></button>
+                        <button onclick="navigateTo('feed')" id="nav-feed"
+                            class="nav-btn transition-all duration-300"><i data-lucide="play-square"
+                                class="w-6 h-6"></i></button>
+                        <button onclick="navigateTo('favorites')" id="nav-favorites"
+                            class="nav-btn transition-all duration-300"><i data-lucide="heart"
+                                class="w-6 h-6"></i></button>
+                        <button onclick="navigateTo('profile')" id="nav-profile"
+                            class="nav-btn transition-all duration-300"><i data-lucide="user"
+                                class="w-6 h-6"></i></button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Presentation Controller -->
+        <div id="presentation-controls" class="fixed bottom-8 left-8 z-[100] flex flex-col items-start gap-4">
+
+            <!-- State 1: Start Button -->
+            <button onclick="startPresentation()" id="init-btn"
+                class="bg-white text-black font-black text-lg py-3 px-8 rounded-full border-[3px] border-black shadow-[0_6px_0_0_rgba(0,0,0,1)] active:scale-95 active:translate-y-1 active:shadow-none transition-all flex items-center group animate-pulse hover:animate-none">
+                <span>Start Presentation</span>
+                <i data-lucide="arrow-right" class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+
+            <!-- State 2: Navigation Bar (Hidden initially) -->
+            <div id="nav-bar-controls" class="hidden flex flex-col items-start relative">
+
+                <!-- Step List Dropdown -->
+                <div id="step-list-menu"
+                    class="hidden absolute bottom-[70px] left-0 w-72 bg-white border-[4px] border-black rounded-[24px] p-3 shadow-[0_8px_0_0_rgba(0,0,0,1)] flex flex-col gap-1 max-h-[60vh] overflow-y-auto menu-scroll origin-bottom-left transition-all z-[101]">
+                    <button onclick="goToStep(1)"
+                        class="text-left font-black p-2.5 text-sm hover:bg-[#C2B4D6] rounded-xl border-2 border-transparent hover:border-black transition-all">Intro
+                        & Team</button>
+                    <button onclick="goToStep(2)"
+                        class="text-left font-black p-2.5 text-sm hover:bg-[#FDB540] rounded-xl border-2 border-transparent hover:border-black transition-all">1.
+                        Objectives & Users</button>
+                    <button onclick="goToStep(3)"
+                        class="text-left font-black p-2.5 text-sm hover:bg-[#F4B5A4] rounded-xl border-2 border-transparent hover:border-black transition-all">2.
+                        UX Research</button>
+                    <button onclick="goToStep(4)"
+                        class="text-left font-black p-2.5 text-sm hover:bg-[#A8D8D6] rounded-xl border-2 border-transparent hover:border-black transition-all">3.
+                        Planning & Features</button>
+                    <button onclick="goToStep(5)"
+                        class="text-left font-black p-2.5 text-sm hover:bg-[#C2B4D6] rounded-xl border-2 border-transparent hover:border-black transition-all">4.
+                        Testing & Analysis</button>
+                    <div class="h-[2px] bg-black/10 my-1"></div>
+                    <button onclick="goToStep(6)"
+                        class="text-left font-black p-2.5 text-sm bg-[#111827] text-white hover:bg-black rounded-xl border-2 border-transparent transition-all mt-1"><i
+                            data-lucide="rocket" class="inline w-4 h-4 mr-1"></i> Unlock Full App</button>
+                </div>
+
+                <!-- Pill Control Bar -->
+                <div id="nav-pill-bar"
+                    class="bg-[#FCF3E8] border-[3px] border-black rounded-full h-16 px-3 flex items-center shadow-[0_6px_0_0_rgba(0,0,0,1)] transition-opacity duration-300">
+                    <button onclick="toggleMenu()"
+                        class="w-10 h-10 bg-white border-2 border-black rounded-full flex items-center justify-center hover:bg-[#FDB540] active:scale-90 transition-all group">
+                        <i data-lucide="list" class="w-5 h-5 text-black group-hover:scale-110 transition-transform"></i>
+                    </button>
+
+                    <div class="w-[2px] h-8 bg-black/20 mx-3"></div>
+
+                    <button id="btn-prev" onclick="prevStep()"
+                        class="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:scale-110 active:scale-90 transition-all shadow-[inset_-2px_-3px_0px_#FDB540] flex-shrink-0">
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </button>
+
+                    <span id="nav-step-text"
+                        class="font-black text-lg min-w-[180px] text-center whitespace-nowrap text-[#111827] px-3">Intro
+                        & Team</span>
+
+                    <button id="btn-next" onclick="nextStep()"
+                        class="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:scale-110 active:scale-90 transition-all shadow-[inset_-2px_-3px_0px_#FDB540] flex-shrink-0">
+                        <i data-lucide="chevron-right" class="w-5 h-5 text-white"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Mock Data ---
+        const categories = [
+            { id: 'all', name: 'All', icon: 'paw-print' },
+            { id: 'cats', name: 'Cats', icon: 'cat' },
+            { id: 'dogs', name: 'Dog', icon: 'dog' },
+            { id: 'birds', name: 'Birds', icon: 'bird' },
+            { id: 'fish', name: 'Fish', icon: 'fish' }
+        ];
+
+        const nearbyPets = [
+            { id: 'milo', name: 'Milo Meow', type: 'Cat', distance: '2km', gender: 'Male', age: '2 Years', weight: '4kg', bgColor: 'bg-[#F5DBC4]', image: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80', owner: { name: 'คุณดังก์', role: 'ครีเตอร์มือใหม่', avatar: 'https://cdn.discordapp.com/attachments/1336931238652416023/1474148759775612988/IMG_8763.png?ex=6998cb84&is=69977a04&hm=6cfe52e1f7aaceb2ca855ce3d13a4a43b0c3d102738dc2d08bc47ffd2f920555&' }, description: "แมวน่ารักของเราเป็นมากกว่าสัตว์เลี้ยง พวกมันคือครอบครัวที่รอเจ้าของใหม่มาพบ! แมวทุกตัวได้รับการเลี้ยงดูด้วยความรัก สุขภาพที่ดี และได้รับการฝึกฝนให้เข้าสังคม เพื่อให้เป็นสมาชิกที่ยอดเยี่ยมของบ้านคุณ" },
+            { id: 'luna', name: 'Luna', type: 'Dog', distance: '3.5km', gender: 'Female', age: '1 Year', weight: '6kg', bgColor: 'bg-[#E3DDF2]', image: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80', owner: { name: 'คุณวีโก้', role: 'ประธานบริษัท', avatar: '' }, description: "ลูน่าเป็นลูกสุนัขที่กระฉับกระเฉงและขี้เล่นมาก กำลังมองหาบ้านที่อบอุ่น เธอชอบไปเดินเล่นและเล่นโยนรับลูกบอล" },
+
+        ];
+
+        const liveFeeds = [
+            { id: 'live1', title: 'แมวแถววัด มาชมน้องๆกันครับ', location: 'วัดบ้านนา', viewers: '1.2k', videoCover: 'https://petapixel.com/assets/uploads/2024/04/meow-camera-hello-street-cat-management.jpg', hostName: 'หลวงพี่เลน', avatar: "https://img5.pic.in.th/file/secure-sv1/-2569-02-20--03.51.48.png" },
+            // { id: 'live2', title: 'Rescue Kittens 🐱', location: 'Shelter A', viewers: '850', videoCover: 'https://images.unsplash.com/photo-1606214174585-fd3158ddf44a?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80', avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80', hostName: 'ShelterHope' }
+        ];
+
+        const initialChatMessages = [
+            { id: 1, user: 'วีโก้เก่า', text: 'คือน่ารักแท้ะ', color: 'text-pink-300' },
+            { id: 2, user: 'เด็กวัด', text: 'ส่งปลาทูให้น้องหน่อย', color: 'text-[#FDB540]', isGift: true }
+        ];
+
+        let activeCat = 'cats';
+        let chatInterval = null;
+        let chatMessages = [...initialChatMessages];
+        let isAppUnlocked = false;
+
+        // --- Presentation Logic (Step-based Navigation) ---
+        let presStep = 0;
+        const maxSteps = 6;
+
+        const stepConfigs = {
+            1: { title: "Intro & Team", type: 'ux', slide: 1 },
+            2: { title: "1. Objectives & Users", type: 'ux', slide: 2 },
+            3: { title: "2. UX Research", type: 'ux', slide: 3 },
+            4: { title: "3. Planning & Features", type: 'ux', slide: 4 },
+            5: { title: "4. Testing & Analysis", type: 'ux', slide: 5 },
+            6: { title: "App Unlocked!", type: 'explore' }
+        };
+
+        function startPresentation() {
+            document.getElementById('init-btn').classList.add('hidden');
+            document.getElementById('nav-bar-controls').classList.remove('hidden');
+            // Hide floating title
+            const title = document.getElementById('floating-app-title');
+            title.style.opacity = '0';
+            title.style.transform = 'translateY(-100px) scale(0.5)';
+            setTimeout(() => title.classList.add('hidden'), 800);
+
+            goToStep(1);
+        }
+
+        function toggleMenu() {
+            const menu = document.getElementById('step-list-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function nextStep() {
+            if (presStep < maxSteps) goToStep(presStep + 1);
+        }
+
+        function prevStep() {
+            if (presStep > 1) goToStep(presStep - 1);
+        }
+
+        // Support Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            if (presStep > 0) {
+                if (e.key === 'ArrowRight') nextStep();
+                if (e.key === 'ArrowLeft') prevStep();
+            }
+        });
+
+        // Event handlers for interactive nav bar
+        function handleNavEnter() {
+            document.getElementById('nav-pill-bar').classList.remove('opacity-40');
+        }
+        function handleNavLeave() {
+            document.getElementById('nav-pill-bar').classList.add('opacity-40');
+        }
+
+        function goToStep(step) {
+            presStep = step;
+            const config = stepConfigs[step];
+
+            // Hide menu
+            document.getElementById('step-list-menu').classList.add('hidden');
+
+            // Update Nav Bar UI text
+            document.getElementById('nav-step-text').innerText = config.title;
+
+            const btnPrev = document.getElementById('btn-prev');
+            const btnNext = document.getElementById('btn-next');
+            const navBar = document.getElementById('nav-pill-bar');
+
+            // Prev button state
+            btnPrev.style.opacity = step === 1 ? '0.3' : '1';
+            btnPrev.style.pointerEvents = step === 1 ? 'none' : 'auto';
+
+            // Next button state
+            if (step === maxSteps) {
+                btnNext.style.opacity = '0.3';
+                btnNext.style.pointerEvents = 'none';
+            } else {
+                btnNext.style.opacity = '1';
+                btnNext.style.pointerEvents = 'auto';
+            }
+
+            // Reset UX Slides
+            document.querySelectorAll('.ux-slide').forEach(el => {
+                el.classList.remove('ux-slide-active');
+                el.classList.replace('opacity-100', 'opacity-0');
+                el.classList.replace('translate-y-0', 'translate-y-16');
+                el.classList.replace('scale-100', 'scale-90');
+            });
+
+            // Reset Tooltips
+            document.querySelectorAll('.app-tooltip').forEach(el => {
+                el.classList.remove('tooltip-active');
+            });
+
+            const phoneWrapper = document.getElementById('phone-wrapper');
+            const phoneApp = document.getElementById('app-container');
+            const presentationBlocker = document.getElementById('presentation-blocker');
+
+            presentationBlocker.style.display = 'block';
+            phoneWrapper.classList.remove('phone-breathe-active');
+            phoneWrapper.style.transform = "";
+            isAppUnlocked = false;
+
+            // Clean up interactive nav bar listeners
+            navBar.classList.remove('opacity-40');
+            navBar.removeEventListener('mouseenter', handleNavEnter);
+            navBar.removeEventListener('mouseleave', handleNavLeave);
+
+            if (config.type === 'ux') {
+                document.getElementById('ux-slides-container').classList.remove('hidden');
+                phoneWrapper.classList.add('phone-flat', 'pointer-events-none');
+                phoneWrapper.classList.remove('phone-up');
+
+                const lockScreen = document.getElementById('screen-lock');
+                lockScreen.classList.remove('hidden', 'opacity-0');
+                phoneApp.classList.add('screen-off');
+                phoneApp.classList.remove('screen-on');
+
+                const slide = document.getElementById(`ux-slide-${config.slide}`);
+                if (slide) {
+                    slide.classList.add('ux-slide-active');
+                    slide.classList.replace('opacity-0', 'opacity-100');
+                    slide.classList.replace('translate-y-16', 'translate-y-0');
+                    slide.classList.replace('scale-90', 'scale-100');
+                }
+            }
+            else if (config.type === 'explore') {
+                document.getElementById('ux-slides-container').classList.add('hidden');
+                phoneWrapper.classList.remove('phone-flat', 'pointer-events-none');
+                phoneWrapper.classList.add('phone-up'); // Standard phone-up has scale(0.85)
+
+                document.getElementById('screen-lock').classList.add('hidden', 'opacity-0');
+                phoneApp.classList.remove('screen-off');
+                phoneApp.classList.add('screen-on');
+
+                isAppUnlocked = true;
+                presentationBlocker.style.display = 'none';
+
+                navigateTo('splash');
+
+                // Set scale to 0.85 to match demo/standard stand-up size
+                phoneWrapper.style.transform = "scale(0.85)";
+
+                setTimeout(() => {
+                    const tt = document.getElementById('tooltip-1');
+                    if (tt) tt.classList.add('tooltip-active');
+                }, 800);
+
+                navBar.classList.add('opacity-40');
+                navBar.addEventListener('mouseenter', handleNavEnter);
+                navBar.addEventListener('mouseleave', handleNavLeave);
+            }
+        }
+
+        // --- App Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCategories();
+            renderHomePets();
+            renderLiveFeeds();
+            renderFavorites();
+            lucide.createIcons();
+
+            const chatInput = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('chat-send-btn');
+            const smileIcon = document.getElementById('chat-smile-icon');
+            chatInput.addEventListener('input', (e) => {
+                if (e.target.value.trim() !== '') {
+                    sendBtn.classList.remove('hidden');
+                    smileIcon.classList.add('hidden');
+                } else {
+                    sendBtn.classList.add('hidden');
+                    smileIcon.classList.remove('hidden');
+                }
+            });
+        });
+
+        // --- Navigation & Dynamic Tooltips ---
+        function navigateTo(screen) {
+            const screens = ['splash', 'home', 'feed', 'favorites', 'profile', 'details', 'liveRoom'];
+            screens.forEach(s => {
+                const el = document.getElementById(`screen-${s}`);
+                if (el) el.classList.add('hidden');
+            });
+
+            const currentEl = document.getElementById(`screen-${screen}`);
+            if (currentEl) currentEl.classList.remove('hidden');
+
+            const statusBar = document.getElementById('status-bar');
+            if (screen === 'liveRoom') {
+                statusBar.classList.remove('text-black');
+                statusBar.classList.add('text-white');
+            } else {
+                statusBar.classList.remove('text-white');
+                statusBar.classList.add('text-black');
+            }
+
+            const bottomNav = document.getElementById('bottom-nav');
+            if (['home', 'feed', 'favorites', 'profile'].includes(screen)) {
+                bottomNav.classList.remove('hidden');
+                updateNavHighlight(screen);
+            } else {
+                bottomNav.classList.add('hidden');
+            }
+
+            if (screen !== 'liveRoom') stopChatSimulation();
+
+            // Show dynamic tooltips if app is unlocked
+            if (isAppUnlocked) {
+                showScreenTooltip(screen);
+            }
+        }
+
+        function showScreenTooltip(screen) {
+            document.querySelectorAll('.app-tooltip').forEach(el => el.classList.remove('tooltip-active'));
+
+            const tooltipMap = {
+                'splash': 'tooltip-1',
+                'home': 'tooltip-2',
+                'feed': 'tooltip-3',
+                'favorites': 'tooltip-4',
+                'profile': 'tooltip-5',
+                'details': 'tooltip-6',
+                'liveRoom': 'tooltip-7'
+            };
+
+            const targetId = tooltipMap[screen];
+            if (targetId) {
+                setTimeout(() => {
+                    const tt = document.getElementById(targetId);
+                    if (tt) tt.classList.add('tooltip-active');
+                }, 300);
+            }
+        }
+
+        function updateNavHighlight(active) {
+            ['home', 'feed', 'favorites', 'profile'].forEach(nav => {
+                const btn = document.getElementById(`nav-${nav}`);
+                if (btn) {
+                    if (nav === active) {
+                        btn.className = 'flex items-center justify-center transition-all duration-300 w-12 h-12 bg-[#FDB540] rounded-full border-[3px] border-black shadow-[0_3px_0_0_rgba(0,0,0,1)] text-black -translate-y-1';
+                    } else {
+                        btn.className = 'flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-90 hover:text-black text-gray-400';
+                    }
+                }
+            });
+            lucide.createIcons();
+        }
+
+        // --- Renders ---
+        function renderCategories() {
+            document.getElementById('home-categories').innerHTML = categories.map(cat => `
+        <div class="flex flex-col items-center space-y-2 cursor-pointer group" onclick="setActiveCategory('${cat.id}')">
+          <div class="w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 group-active:scale-90 ${activeCat === cat.id ? 'bg-[#FDB540] border-[3px] border-black shadow-[0_3px_0_0_rgba(0,0,0,1)] text-black' : 'bg-[#F5E6D3] hover:bg-[#EBE1D2] text-gray-500'}"><i data-lucide="${cat.icon}"></i></div>
+          <span class="text-sm font-bold ${activeCat === cat.id ? 'text-black' : 'text-gray-500'}">${cat.name}</span>
+        </div>
+      `).join('');
+        }
+
+        function setActiveCategory(id) {
+            activeCat = id;
+            renderCategories();
+            lucide.createIcons();
+        }
+
+        function renderHomePets() {
+            document.getElementById('home-pets').innerHTML = nearbyPets.map(pet => `
+        <div onclick="openPetDetails('${pet.id}')" class="min-w-[240px] h-[300px] ${pet.bgColor} rounded-[32px] p-4 relative flex flex-col justify-end border-[3px] border-black shadow-[0_4px_0_0_rgba(0,0,0,1)] cursor-pointer active:scale-95 transition-transform duration-200 group overflow-hidden">
+          <div class="absolute top-4 left-4 bg-[#F5E6D3]/80 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center space-x-1 z-10 border border-black"><i data-lucide="map-pin" class="w-3 h-3 text-gray-800"></i><span class="text-xs font-bold text-gray-800">${pet.distance}</span></div>
+          <button class="absolute top-4 right-4 w-8 h-8 bg-[#FDB540] rounded-full flex items-center justify-center z-10 border-2 border-black shadow-[0_2px_0_0_rgba(0,0,0,1)] active:scale-75 transition-transform" onclick="event.stopPropagation()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="black" stroke="none"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+          </button>
+          <img src="${pet.image}" class="absolute inset-0 w-full h-full object-cover mix-blend-multiply opacity-90 transition-transform duration-500 group-hover:scale-105" style="object-position: center 20%;" />
+          <div class="relative z-10 mb-2 transform transition-transform duration-300 group-hover:translate-y-[-5px]">
+            <h4 class="text-2xl font-black text-black leading-none mb-1">${pet.name}</h4><p class="text-sm font-bold text-gray-800">${pet.gender} • ${pet.age}</p>
+          </div>
+        </div>
+      `).join('') + '<div class="min-w-[40px] h-[300px]"></div>';
+        }
+
+        function renderFavorites() {
+            document.getElementById('favorites-grid').innerHTML = nearbyPets.map(pet => `
+        <div onclick="openPetDetails('${pet.id}')" class="w-full h-[220px] ${pet.bgColor} rounded-[28px] p-3 relative cursor-pointer flex flex-col justify-end overflow-hidden active:scale-95 transition-transform duration-200 group border-[3px] border-black shadow-[0_4px_0_0_rgba(0,0,0,1)]">
+          <button class="absolute top-3 right-3 w-7 h-7 bg-white rounded-full flex items-center justify-center z-10 border-2 border-black shadow-[0_2px_0_0_rgba(0,0,0,1)] active:scale-75 transition-transform" onclick="event.stopPropagation()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="red" stroke="none"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+          </button>
+          <img src="${pet.image}" class="absolute inset-0 w-full h-full object-cover mix-blend-multiply opacity-90 transition-transform duration-500 group-hover:scale-105" style="object-position: center 20%;" />
+          <div class="relative z-10 transform transition-transform duration-300 group-hover:translate-y-[-2px]">
+            <h4 class="text-xl font-black text-black leading-none mb-1 drop-shadow-sm line-clamp-1">${pet.name}</h4>
+            <div class="flex items-center text-xs font-bold text-gray-800 space-x-1">
+               <i data-lucide="map-pin" class="w-2.5 h-2.5"></i>
+               <span>${pet.distance}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+        }
+
+        function renderLiveFeeds() {
+            document.getElementById('feed-container').innerHTML = liveFeeds.map(feed => `
+        <div class="w-full h-full px-5 pt-2 pb-[110px] flex flex-col snap-child flex-shrink-0">
+          <div onclick="openLiveRoom('${feed.id}')" class="flex-1 w-full rounded-[40px] border-[3px] border-black shadow-[0_6px_0_0_rgba(0,0,0,1)] relative overflow-hidden bg-gray-900 flex flex-col justify-end group cursor-pointer active:scale-[0.98] transition-all">
+            <img src="${feed.videoCover}" class="absolute inset-0 w-full h-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-105" />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+            
+            <div class="absolute top-4 left-4 flex items-center space-x-2 z-20">
+              <div class="bg-[#F4B5A4] text-black border-2 border-black font-black text-xs px-3 py-1.5 rounded-full animate-pulse shadow-[0_2px_0_0_rgba(0,0,0,1)]">LIVE</div>
+              <div class="bg-white text-black border-2 border-black font-bold text-xs px-3 py-1.5 rounded-full flex items-center shadow-[0_2px_0_0_rgba(0,0,0,1)]">
+                <i data-lucide="user" class="w-3 h-3 mr-1"></i> ${feed.viewers}
+              </div>
+            </div>
+            
+            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <div class="w-20 h-20 bg-[#FDB540] rounded-full border-[3px] border-black flex items-center justify-center shadow-[0_4px_0_0_rgba(0,0,0,1)]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="black" stroke="none" class="ml-1"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+            </div>
+
+            <div class="relative z-20 px-5 pb-6 flex flex-col items-start w-[80%]">
+              <div class="flex items-center mb-2">
+                <img src="${feed.avatar}" class="w-8 h-8 rounded-full border-2 border-white mr-2 shadow-sm" />
+                <span class="text-white font-bold text-sm shadow-black drop-shadow-md">${feed.hostName}</span>
+              </div>
+              <h3 class="text-white text-2xl font-black mb-1 drop-shadow-md">${feed.title}</h3>
+              <div class="flex items-center text-[#FDB540] text-sm font-bold mb-3 drop-shadow-md bg-black/30 px-2 py-1 rounded-lg backdrop-blur-sm">
+                <i data-lucide="map-pin" class="w-3.5 h-3.5 mr-1"></i>
+                <span>${feed.location}</span>
+              </div>
+              <p class="text-white/90 text-sm font-semibold">Tap to enter live room to chat and send gifts! 🐟</p>
+            </div>
+          </div>
+        </div>
+      `).join('');
+        }
+
+        // --- Interactive Actions ---
+        function openPetDetails(id) {
+            const pet = nearbyPets.find(p => p.id === id);
+            if (!pet) return;
+
+            document.getElementById('detail-image').src = pet.image;
+            document.getElementById('detail-name').innerText = pet.name;
+            document.getElementById('detail-distance').innerText = `Distance ${pet.distance}`;
+            document.getElementById('detail-gender').innerText = pet.gender;
+            document.getElementById('detail-age').innerText = pet.age;
+            document.getElementById('detail-weight').innerText = pet.weight;
+            document.getElementById('detail-owner-avatar').src = pet.owner.avatar;
+            document.getElementById('detail-owner-name').innerText = pet.owner.name;
+            document.getElementById('detail-owner-role').innerText = pet.owner.role;
+            document.getElementById('detail-desc').innerText = pet.description;
+
+            navigateTo('details');
+        }
+
+        function openLiveRoom(id) {
+            const feed = liveFeeds.find(f => f.id === id);
+            if (!feed) return;
+
+            document.getElementById('live-cover').src = feed.videoCover;
+            document.getElementById('live-avatar').src = feed.avatar;
+            document.getElementById('live-host').innerText = feed.hostName;
+            document.getElementById('live-loc').innerText = feed.location;
+            document.getElementById('live-viewers-count').innerText = feed.viewers;
+
+            chatMessages = [...initialChatMessages];
+            renderChat();
+            startChatSimulation();
+
+            navigateTo('liveRoom');
+        }
+
+        function leaveLiveRoom() {
+            stopChatSimulation();
+            navigateTo('feed');
+        }
+
+        // --- Live Room & Chat Mechanics ---
+        function renderChat() {
+            const container = document.getElementById('live-chat');
+            container.innerHTML = chatMessages.map(msg => `
+        <div class="bg-black/30 backdrop-blur-sm px-3 py-2 rounded-2xl w-fit max-w-full animate-message border border-white/10">
+          <span class="text-xs font-bold ${msg.isHost ? 'text-purple-300' : 'text-gray-400'} mr-2">${msg.user}:</span>
+          <span class="text-sm font-semibold ${msg.color}">${msg.text}</span>
+        </div>
+      `).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function startChatSimulation() {
+            if (chatInterval) clearInterval(chatInterval);
+            const randomUsers = ['Alex22', 'PetFan', 'DogDaze', 'Guest_991'];
+            const randomTexts = ['So fluffy!', 'Hahaha', 'Where is this?', 'Can I adopt?', '❤️❤️❤️'];
+
+            chatInterval = setInterval(() => {
+                const isGift = Math.random() > 0.8;
+                chatMessages.push({
+                    id: Date.now(),
+                    user: randomUsers[Math.floor(Math.random() * randomUsers.length)],
+                    text: isGift ? 'Sent a Gift 🎁' : randomTexts[Math.floor(Math.random() * randomTexts.length)],
+                    color: isGift ? 'text-[#FDB540]' : 'text-gray-200',
+                    isHost: false
+                });
+                if (chatMessages.length > 15) chatMessages.shift();
+                renderChat();
+            }, 4000);
+        }
+
+        function stopChatSimulation() {
+            if (chatInterval) { clearInterval(chatInterval); chatInterval = null; }
+        }
+
+        function handleSendGift(type) {
+            const animContainer = document.getElementById('live-animations');
+            const el = document.createElement('div');
+            el.className = 'absolute right-10 bottom-10 animate-pop-up z-30 pointer-events-none';
+
+            if (type === 'fish') {
+                el.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="#FDB540" stroke="none" style="filter: drop-shadow(0px 4px 0px black)"><path d="M6.5 12c.94-3.46 4.94-6 8.5-6 1.11 0 2.2.28 3.14.82-1.35 1.5-2.14 3.51-2.14 5.68 0 2.17.79 4.18 2.14 5.68-.94.54-2.03.82-3.14.82-3.56 0-7.56-2.54-8.5-6Z"/><path d="M18.14 6.82A6.98 6.98 0 0 0 22 12a6.98 6.98 0 0 0-3.86 5.18 8.02 8.02 0 0 1-2.14-5.18 8.02 8.02 0 0 1 2.14-5.18Z"/><path d="M6.5 12a4.5 4.5 0 0 0-4.5 4.5V20l3-3a13 13 0 0 0 1.5-5Z"/><path d="M6.5 12a4.5 4.5 0 0 1-4.5-4.5V4l3 3a13 13 0 0 1 1.5 5Z"/><circle cx="15" cy="12" r="1" fill="white"/></svg>`;
+            } else {
+                el.innerHTML = `<i data-lucide="gift" class="w-12 h-12 text-[#F4B5A4]" style="fill: #F4B5A4; filter: drop-shadow(0px 4px 0px black)"></i>`;
+            }
+
+            animContainer.appendChild(el);
+            lucide.createIcons({ root: el });
+            setTimeout(() => el.remove(), 1500);
+
+            chatMessages.push({ id: Date.now(), user: 'You', text: type === 'fish' ? 'Sent 1x Fish 🐟' : 'Sent a Gift 🎁', color: 'text-[#FDB540]', isHost: false });
+            renderChat();
+        }
+
+        function handleSendMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            chatMessages.push({ id: Date.now(), user: 'You', text: text, color: 'text-white', isHost: false });
+            input.value = '';
+            document.getElementById('chat-send-btn').classList.add('hidden');
+            document.getElementById('chat-smile-icon').classList.remove('hidden');
+            renderChat();
+        }
+    </script>
+</body>
+
+</html>
