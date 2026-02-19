@@ -1686,7 +1686,7 @@
                 <i data-lucide="map-pin" class="w-3.5 h-3.5 mr-1"></i>
                 <span>${feed.location}</span>
               </div>
-              <p class="text-white/90 text-sm font-semibold">Tap to enter live room to chat and send gifts! 🐟</p>
+              <p class="text-white/90 text-sm font-semibold">เข้าชมเพื่อสนับสนุนอาหารน้องๆ</p>
             </div>
           </div>
         </div>
@@ -1784,7 +1784,7 @@
             lucide.createIcons({ root: el });
             setTimeout(() => el.remove(), 1500);
 
-            chatMessages.push({ id: Date.now(), user: 'You', text: type === 'fish' ? 'Sent 1x Fish 🐟' : 'Sent a Gift 🎁', color: 'text-[#FDB540]', isHost: false });
+            chatMessages.push({ id: Date.now(), user: 'คุณ', text: type === 'fish' ? 'ให้ปลาทู 🐟' : 'ส่งของขวัญ 🎁', color: 'text-[#FDB540]', isHost: false });
             renderChat();
         }
 
@@ -1794,7 +1794,7 @@
             const text = input.value.trim();
             if (!text) return;
 
-            chatMessages.push({ id: Date.now(), user: 'You', text: text, color: 'text-white', isHost: false });
+            chatMessages.push({ id: Date.now(), user: 'คุณ', text: text, color: 'text-white', isHost: false });
             input.value = '';
             document.getElementById('chat-send-btn').classList.add('hidden');
             document.getElementById('chat-smile-icon').classList.remove('hidden');
